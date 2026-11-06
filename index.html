@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}</style>
+<title>Núcleo Gestión</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Onest:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera con selector de sector, pestañas bajo ella y una columna de trabajo (agenda, clientes, servicios, caja, sector). El acento cambia de tono según el sector para mostrar que el núcleo se adapta. */
+:root {
+  --font-display: "Familjen Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Onest", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --hue: 265;
+  --bg: #F1F3F6;
+  --surface: #FFFFFF;
+  --surface-2: #E8ECF1;
+  --fg: #141A24;
+  --muted: #566073;
+  --line: #D5DBE4;
+  --accent: oklch(0.5 0.17 var(--hue));
+  --accent-ink: #FFFFFF;
+  --accent-soft: oklch(0.94 0.035 var(--hue));
+  --ok: #146C43;
+  --ok-soft: #DCF2E5;
+  --warn: #8A5300;
+  --warn-soft: #FBEACB;
+  --bad: #B42318;
+  --scrim: rgba(15, 19, 26, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F131A;
+    --surface: #171D27;
+    --surface-2: #202836;
+    --fg: #E8ECF3;
+    --muted: #9AA6B8;
+    --line: #2B3546;
+    --accent: oklch(0.76 0.13 var(--hue));
+    --accent-ink: #0F131A;
+    --accent-soft: oklch(0.3 0.05 var(--hue));
+    --ok: #66D4A0;
+    --ok-soft: #14301F;
+    --warn: #F1B955;
+    --warn-soft: #3A2B0F;
+    --bad: #FF8A80;
+    --scrim: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F131A;
+  --surface: #171D27;
+  --surface-2: #202836;
+  --fg: #E8ECF3;
+  --muted: #9AA6B8;
+  --line: #2B3546;
+  --accent: oklch(0.76 0.13 var(--hue));
+  --accent-ink: #0F131A;
+  --accent-soft: oklch(0.3 0.05 var(--hue));
+  --ok: #66D4A0;
+  --ok-soft: #14301F;
+  --warn: #F1B955;
+  --warn-soft: #3A2B0F;
+  --bad: #FF8A80;
+  --scrim: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+:root[data-sector="peluqueria"] { --hue: 350; }
+:root[data-sector="taller"] { --hue: 50; }
+:root[data-sector="veterinaria"] { --hue: 165; }
+:root[data-sector="academia"] { --hue: 265; }
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 var(--font-body);
+  padding-block: 20px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.app { max-width: 960px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; padding-bottom: 14px; }
+.brand h1 { font-size: 24px; line-height: 1.1; font-weight: 700; }
+.brand p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.lbl { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.sector { min-width: min(100%, 240px); }
+select, input, textarea {
+  width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+}
+textarea { resize: vertical; min-height: 72px; }
+.note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+
+.tabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+.tab { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 14px; font-weight: 600; font-size: 14px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 14px; }
+.bar h2 { font-size: 22px; font-weight: 700; }
+.bar .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.btn { min-height: 38px; padding: 7px 13px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.quiet:hover { background: var(--surface-2); }
+.btn.danger { color: var(--bad); }
+.btn.small { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.card + .card { margin-top: 10px; }
+.stack { display: grid; gap: 10px; }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+.form .wide { grid-column: 1 / -1; }
+.panel { margin-bottom: 16px; }
+.empty { color: var(--muted); padding: 28px 16px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
+
+.appt { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 6px 14px; align-items: start; }
+.time { font-family: var(--font-mono); font-size: 15px; font-weight: 500; padding-top: 1px; }
+.name { font-weight: 600; overflow-wrap: anywhere; }
+.meta { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.side { display: grid; justify-items: end; gap: 6px; }
+.price { font-family: var(--font-mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+.acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.pill.hecha { background: var(--warn-soft); color: var(--warn); }
+.pill.cobrada { background: var(--ok-soft); color: var(--ok); }
+.pill.hoy { background: var(--accent-soft); color: var(--accent); }
+
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.clrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; width: 100%; text-align: left; cursor: pointer; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+.clrow:hover { border-color: var(--accent); }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.svrow { display: grid; grid-template-columns: minmax(0, 1fr) 92px auto; gap: 8px 12px; align-items: center; }
+.svrow input { text-align: right; font-family: var(--font-mono); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.tile .big { font-family: var(--font-display); font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.chart { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: end; height: 170px; }
+.col { display: grid; grid-template-rows: 18px 1fr 18px; height: 100%; text-align: center; font-size: 12px; color: var(--muted); }
+.col .val { font-family: var(--font-mono); font-size: 11px; color: var(--fg); }
+.col .track { display: flex; align-items: flex-end; border-bottom: 1px solid var(--line); }
+.col .fill { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
+.col .fill.zero { background: var(--line); }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.scroll { overflow-x: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2); border-radius: 99px; padding: 3px 4px 3px 12px; font-size: 14px; }
+.chip button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 4px 8px; border-radius: 99px; }
+.chip button:hover { color: var(--bad); }
+
+.back { position: fixed; inset: 0; z-index: 20; background: var(--scrim); display: flex; justify-content: flex-end; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.sheet { width: min(100%, 460px); height: 100%; overflow-y: auto; background: var(--bg); border-left: 1px solid var(--line); padding: 20px max(16px, env(safe-area-inset-right, 0px)) 28px 16px; }
+.sheet h2 { font-size: 21px; margin-bottom: 14px; }
+.hist { margin: 18px 0 0; }
+.hist h3 { font-size: 14px; margin-bottom: 8px; }
+.hist li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+
+@media (max-width: 520px) {
+  .svrow { grid-template-columns: minmax(0, 1fr) 84px; }
+  .svrow .btn { grid-column: 1 / -1; justify-self: start; }
+  .back { justify-content: stretch; }
+  .sheet { width: 100%; border-left: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .clrow, .tab { transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
+}
+</style>
+
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'nucleo-gestion-v1';
+
+  // Función de cada sector: palabras que cambian y campos extra de la ficha del cliente.
+  var SECTORS = {
+    peluqueria: {
+      name: 'Peluquería y estética', cl: 'Cliente', cls: 'Clientes', ap: 'Cita', aps: 'Citas', st: 'Profesional',
+      newCl: 'Nuevo cliente', newAp: 'Nueva cita', noAp: 'No hay citas este día.', noCl: 'Todavía no hay clientes.',
+      fields: [
+        { key: 'alergias', label: 'Alergias o sensibilidad a tintes', type: 'text' },
+        { key: 'frecuencia', label: 'Frecuencia habitual', type: 'text' },
+        { key: 'ultimo', label: 'Último tinte', type: 'date' }
+      ],
+      staff: ['Lucía', 'Marta'],
+      services: [['Corte mujer', 22, 45], ['Corte hombre', 14, 30], ['Tinte de raíz', 38, 75], ['Mechas', 70, 120], ['Peinado', 18, 30]],
+      clients: [
+        ['Carmen Ruiz', '600 00 00 01', 'Prefiere tardes.', { alergias: 'Ninguna', frecuencia: 'Cada 6 semanas' }],
+        ['Sofía Martín', '600 00 00 02', '', { alergias: 'Amoníaco', frecuencia: 'Cada 8 semanas' }],
+        ['Daniel Gil', '600 00 00 03', '', { frecuencia: 'Cada 4 semanas' }],
+        ['Paula Vega', '600 00 00 04', 'Viene con su hija.', { frecuencia: 'Cada 3 meses' }],
+        ['Rosa Molina', '600 00 00 05', '', { alergias: 'Ninguna' }]
+      ]
+    },
+    taller: {
+      name: 'Taller mecánico', cl: 'Cliente', cls: 'Clientes', ap: 'Entrada', aps: 'Entradas', st: 'Mecánico',
+      newCl: 'Nuevo cliente', newAp: 'Nueva entrada', noAp: 'No hay vehículos citados este día.', noCl: 'Todavía no hay clientes.',
+      fields: [
+        { key: 'matricula', label: 'Matrícula', type: 'text' },
+        { key: 'vehiculo', label: 'Vehículo', type: 'text' },
+        { key: 'km', label: 'Kilómetros', type: 'number' },
+        { key: 'itv', label: 'Próxima ITV', type: 'date' }
+      ],
+      staff: ['Javi', 'Sergio'],
+      services: [['Cambio de aceite y filtro', 65, 45], ['Pastillas de freno', 95, 90], ['Cambio de neumáticos (4)', 220, 60], ['Diagnosis electrónica', 40, 30], ['Revisión pre-ITV', 35, 40]],
+      clients: [
+        ['Antonio López', '600 00 00 11', '', { matricula: '4821 KLM', vehiculo: 'Seat León', km: 148000 }],
+        ['Marta Sanz', '600 00 00 12', 'Avisar por WhatsApp.', { matricula: '1957 HVC', vehiculo: 'Renault Clio', km: 92000 }],
+        ['Luis Herrera', '600 00 00 13', 'Furgoneta de reparto.', { matricula: '7340 JBN', vehiculo: 'Ford Transit', km: 210000 }],
+        ['Elena Cruz', '600 00 00 14', '', { matricula: '3306 MTG', vehiculo: 'Toyota Yaris', km: 61000 }]
+      ]
+    },
+    veterinaria: {
+      name: 'Clínica veterinaria', cl: 'Propietario', cls: 'Propietarios', ap: 'Consulta', aps: 'Consultas', st: 'Veterinario/a',
+      newCl: 'Nuevo propietario', newAp: 'Nueva consulta', noAp: 'No hay consultas este día.', noCl: 'Todavía no hay propietarios.',
+      fields: [
+        { key: 'mascota', label: 'Nombre de la mascota', type: 'text' },
+        { key: 'especie', label: 'Especie y raza', type: 'text' },
+        { key: 'chip', label: 'Nº de microchip', type: 'text' },
+        { key: 'vacuna', label: 'Próxima vacuna', type: 'date' }
+      ],
+      staff: ['Dra. Peña', 'Dr. Ortiz'],
+      services: [['Consulta general', 30, 20], ['Vacunación', 38, 20], ['Desparasitación', 18, 15], ['Analítica de sangre', 65, 30], ['Revisión dental', 85, 45]],
+      clients: [
+        ['Ana Prieto', '600 00 00 21', '', { mascota: 'Toby', especie: 'Perro, labrador' }],
+        ['Jorge Díaz', '600 00 00 22', '', { mascota: 'Luna', especie: 'Gata europea' }],
+        ['Nuria Gómez', '600 00 00 23', 'Primera visita.', { mascota: 'Kiko', especie: 'Conejo enano' }],
+        ['Pedro Ramos', '600 00 00 24', '', { mascota: 'Max', especie: 'Perro, bulldog francés' }]
+      ]
+    },
+    academia: {
+      name: 'Academia o clases', cl: 'Alumno', cls: 'Alumnos', ap: 'Clase', aps: 'Clases', st: 'Profesor/a',
+      newCl: 'Nuevo alumno', newAp: 'Nueva clase', noAp: 'No hay clases este día.', noCl: 'Todavía no hay alumnos.',
+      fields: [
+        { key: 'grupo', label: 'Grupo o curso', type: 'text' },
+        { key: 'tutor', label: 'Madre, padre o tutor', type: 'text' },
+        { key: 'cuota', label: 'Cuota mensual (€)', type: 'number' }
+      ],
+      staff: ['Irene', 'Pablo'],
+      services: [['Clase individual', 20, 60], ['Refuerzo en grupo', 12, 60], ['Preparación de examen', 25, 90], ['Tutoría con familias', 15, 30]],
+      clients: [
+        ['Hugo Ferrer', '600 00 00 31', '', { grupo: '4º ESO', tutor: 'Mónica Ferrer', cuota: 55 }],
+        ['Valeria Soto', '600 00 00 32', 'Prepara la EBAU.', { grupo: '2º Bachillerato', tutor: 'Raúl Soto', cuota: 80 }],
+        ['Mateo Ríos', '600 00 00 33', '', { grupo: '1º ESO', tutor: 'Laura Ríos', cuota: 55 }],
+        ['Claudia Nieto', '600 00 00 34', '', { grupo: '6º Primaria', tutor: 'Ismael Nieto', cuota: 45 }]
+      ]
+    }
+  };
+
+  // Plantilla de citas de ejemplo: [día respecto a hoy, hora, cliente, servicio, profesional, estado]
+  var DEMO = [
+    [-6, '10:00', 0, 0, 0, 'cobrada'], [-5, '11:30', 1, 1, 1, 'cobrada'], [-4, '17:00', 2, 2, 0, 'cobrada'],
+    [-3, '09:30', 3, 0, 1, 'cobrada'], [-2, '12:00', 4, 3, 0, 'cobrada'], [-2, '18:00', 1, 1, 1, 'cobrada'],
+    [-1, '10:30', 0, 2, 1, 'cobrada'], [-1, '16:00', 2, 0, 0, 'cobrada'],
+    [0, '09:30', 0, 0, 0, 'hecha'], [0, '11:00', 1, 1, 1, 'pendiente'], [0, '12:30', 2, 2, 0, 'pendiente'], [0, '17:00', 3, 3, 1, 'pendiente'],
+    [1, '10:00', 4, 1, 0, 'pendiente'], [1, '16:30', 0, 3, 1, 'pendiente']
+  ];
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parse(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function addDays(s, n) { var d = parse(s); d.setDate(d.getDate() + n); return ymd(d); }
+  var TODAY = ymd(new Date());
+  function uid() { return Math.random().toString(36).slice(2, 9); }
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function money(n) {
+    n = Number(n) || 0;
+    return n.toLocaleString('es-ES', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €';
+  }
+  function dayLabel(s) { return parse(s).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }); }
+  function shortDate(s) { return parse(s).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', ''); }
+
+  function seed(key) {
+    var S = SECTORS[key];
+    var clients = S.clients.map(function (c) { return { id: uid(), name: c[0], phone: c[1], notes: c[2] || '', extra: c[3] || {} }; });
+    var services = S.services.map(function (s) { return { id: uid(), name: s[0], price: s[1], min: s[2] }; });
+    var appts = DEMO.map(function (t) {
+      var sv = services[t[3] % services.length];
+      return {
+        id: uid(), clientId: clients[t[2] % clients.length].id, serviceId: sv.id,
+        staff: S.staff[t[4] % S.staff.length], date: addDays(TODAY, t[0]), time: t[1], status: t[5], price: sv.price
+      };
+    });
+    return { clients: clients, services: services, staff: S.staff.slice(), fields: S.fields.map(function (f) { return Object.assign({}, f); }), appts: appts };
+  }
+
+  var db = null;
+  try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
+  if (!db || typeof db !== 'object' || !db.data || !SECTORS[db.sector]) db = { sector: 'peluqueria', data: {} };
+  function D() { if (!db.data[db.sector]) db.data[db.sector] = seed(db.sector); return db.data[db.sector]; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { /* sin almacenamiento */ } }
+
+  var ui = { tab: 'agenda', date: TODAY, q: '', sheet: null, showAp: false, showSv: false };
+  var root = document.getElementById('app');
+
+  function client(id) { return D().clients.filter(function (c) { return c.id === id; })[0]; }
+  function service(id) { return D().services.filter(function (s) { return s.id === id; })[0]; }
+  function fieldText(f, v) {
+    if (v === undefined || v === null || v === '') return '';
+    if (f.type === 'date') return parse(v).toLocaleDateString('es-ES');
+    if (f.type === 'number') return Number(v).toLocaleString('es-ES');
+    return v;
+  }
+  function summary(c) {
+    var out = [];
+    D().fields.forEach(function (f) {
+      var t = fieldText(f, c.extra[f.key]);
+      if (t && out.length < 2) out.push(esc(f.label.split(' (')[0]) + ': ' + esc(t));
+    });
+    return out.join(' · ');
+  }
+  function waLink(c, a, S) {
+    var d = (c.phone || '').replace(/\D/g, '');
+    if (d.length === 9) d = '34' + d;
+    if (!d) return '';
+    var sv = service(a.serviceId);
+    var txt = 'Hola ' + c.name.split(' ')[0] + ', te recordamos tu ' + S.ap.toLowerCase() + (sv ? ' de ' + sv.name : '') +
+      ' el ' + dayLabel(a.date) + ' a las ' + a.time + '. Si no puedes venir, avísanos.';
+    return 'https://wa.me/' + d + '?text=' + encodeURIComponent(txt);
+  }
+
+  /* ---------- vistas ---------- */
+
+  function header(S) {
+    var opts = Object.keys(SECTORS).map(function (k) {
+      return '<option value="' + k + '"' + (k === db.sector ? ' selected' : '') + '>' + esc(SECTORS[k].name) + '</option>';
+    }).join('');
+    return '<header class="top"><div class="brand"><h1>Núcleo Gestión</h1><p>Agenda, clientes y caja para negocios locales</p></div>' +
+      '<div class="sector"><label class="lbl" for="sector">Tipo de negocio</label><select id="sector">' + opts + '</select></div></header>' +
+      '<p class="note"><span>Datos de ejemplo de ' + esc(S.name.toLowerCase()) + ', guardados solo en este navegador.</span>' +
+      '<button class="btn quiet small" data-a="reset" type="button">Restablecer ejemplos</button></p>';
+  }
+
+  function tabs(S) {
+    var t = [['agenda', 'Agenda'], ['clients', S.cls], ['services', 'Servicios'], ['cash', 'Caja'], ['setup', 'Sector']];
+    return '<nav class="tabs" role="tablist" aria-label="Secciones">' + t.map(function (x) {
+      return '<button class="tab" role="tab" type="button" data-a="tab" data-v="' + x[0] + '" aria-selected="' + (ui.tab === x[0]) + '">' + esc(x[1]) + '</button>';
+    }).join('') + '</nav>';
+  }
+
+  function apptCard(a, S) {
+    var c = client(a.clientId), sv = service(a.serviceId);
+    var acts = '';
+    if (a.status === 'pendiente') {
+      acts += '<button class="btn small" type="button" data-a="st" data-id="' + a.id + '" data-v="hecha">Marcar como hecha</button>';
+      var link = c ? waLink(c, a, S) : '';
+      if (link) acts += '<a class="btn small" href="' + esc(link) + '" target="_blank" rel="noopener">Recordar por WhatsApp</a>';
+    } else if (a.status === 'hecha') {
+      acts += '<button class="btn small primary" type="button" data-a="st" data-id="' + a.id + '" data-v="cobrada">Cobrar ' + money(a.price) + '</button>';
+    }
+    acts += '<button class="btn small quiet danger" type="button" data-a="del-ap" data-id="' + a.id + '">Eliminar</button>';
+    var label = { pendiente: 'Pendiente', hecha: 'Por cobrar', cobrada: 'Cobrada' }[a.status];
+    return '<li class="card appt"><div class="time">' + esc(a.time) + '</div>' +
+      '<div><div class="name">' + esc(c ? c.name : 'Sin ' + S.cl.toLowerCase()) + '</div>' +
+      '<div class="meta">' + esc(sv ? sv.name : 'Servicio eliminado') + ' · ' + esc(a.staff) + (sv && sv.min ? ' · ' + sv.min + ' min' : '') + '</div></div>' +
+      '<div class="side"><span class="price">' + money(a.price) + '</span><span class="pill ' + a.status + '">' + label + '</span></div>' +
+      '<div class="acts">' + acts + '</div></li>';
+  }
+
+  function apptForm(S) {
+    var d = D();
+    if (!d.clients.length) return '<div class="card panel"><p class="meta" style="margin:0">Primero crea un ' + esc(S.cl.toLowerCase()) + ' en la pestaña ' + esc(S.cls) + '.</p></div>';
+    var oc = d.clients.map(function (c) { return '<option value="' + c.id + '">' + esc(c.name) + '</option>'; }).join('');
+    var os = d.services.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + ' · ' + money(s.price) + '</option>'; }).join('');
+    var op = d.staff.map(function (s) { return '<option>' + esc(s) + '</option>'; }).join('');
+    return '<form class="card panel form" data-form="appt">' +
+      '<div><label class="lbl" for="ap-client">' + esc(S.cl) + '</label><select id="ap-client">' + oc + '</select></div>' +
+      '<div><label class="lbl" for="ap-service">Servicio</label><select id="ap-service">' + os + '</select></div>' +
+      '<div><label class="lbl" for="ap-staff">' + esc(S.st) + '</label><select id="ap-staff">' + op + '</select></div>' +
+      '<div><label class="lbl" for="ap-date">Fecha</label><input id="ap-date" type="date" required value="' + ui.date + '"></div>' +
+      '<div><label class="lbl" for="ap-time">Hora</label><input id="ap-time" type="time" required value="10:00"></div>' +
+      '<div><button class="btn primary" type="submit" style="width:100%">Guardar ' + esc(S.ap.toLowerCase()) + '</button></div></form>';
+  }
+
+  function agenda(S) {
+    var d = D();
+    var day = d.appts.filter(function (a) { return a.date === ui.date; }).sort(function (a, b) { return a.time < b.time ? -1 : a.time > b.time ? 1 : 0; });
+    var pend = day.filter(function (a) { return a.status === 'pendiente'; }).length;
+    var por = day.filter(function (a) { return a.status === 'hecha'; }).length;
+    var tot = day.reduce(function (s, a) { return s + a.price; }, 0);
+    var sub = day.length ? day.length + ' ' + (day.length === 1 ? S.ap.toLowerCase() : S.aps.toLowerCase()) + ' · ' + pend + ' pendientes · ' + por + ' por cobrar · ' + money(tot) : 'Sin ' + S.aps.toLowerCase();
+    return '<div class="bar"><div><h2>' + esc(cap(dayLabel(ui.date))) + (ui.date === TODAY ? ' <span class="pill hoy">Hoy</span>' : '') + '</h2><div class="sub">' + sub + '</div></div>' +
+      '<div class="row"><button class="btn" type="button" data-a="day" data-v="-1" aria-label="Día anterior">‹</button>' +
+      '<button class="btn" type="button" data-a="day" data-v="0">Hoy</button>' +
+      '<button class="btn" type="button" data-a="day" data-v="1" aria-label="Día siguiente">›</button>' +
+      '<button class="btn primary" type="button" data-a="toggle-ap">' + (ui.showAp ? 'Cerrar' : esc(S.newAp)) + '</button></div></div>' +
+      (ui.showAp ? apptForm(S) : '') +
+      (day.length ? '<ul class="list">' + day.map(function (a) { return apptCard(a, S); }).join('') + '</ul>' : '<div class="empty">' + esc(S.noAp) + '</div>');
+  }
+
+  function clientRows(S) {
+    var q = ui.q.trim().toLowerCase();
+    var list = D().clients.filter(function (c) {
+      if (!q) return true;
+      var hay = (c.name + ' ' + c.phone + ' ' + Object.keys(c.extra).map(function (k) { return c.extra[k]; }).join(' ')).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    }).sort(function (a, b) { return a.name.localeCompare(b.name, 'es'); });
+    if (!list.length) return '<div class="empty">' + (q ? 'Ningún resultado para «' + esc(ui.q) + '».' : esc(S.noCl)) + '</div>';
+    return '<ul class="list">' + list.map(function (c) {
+      var n = D().appts.filter(function (a) { return a.clientId === c.id; }).length;
+      return '<li><button class="clrow" type="button" data-a="open-client" data-id="' + c.id + '">' +
+        '<span><span class="name">' + esc(c.name) + '</span><br><span class="meta">' + (summary(c) || esc(c.phone)) + '</span></span>' +
+        '<span class="meta num">' + n + ' ' + (n === 1 ? S.ap.toLowerCase() : S.aps.toLowerCase()) + '</span></button></li>';
+    }).join('') + '</ul>';
+  }
+
+  function clients(S) {
+    return '<div class="bar"><div><h2>' + esc(S.cls) + '</h2><div class="sub">' + D().clients.length + ' en total</div></div>' +
+      '<button class="btn primary" type="button" data-a="open-client" data-id="new">' + esc(S.newCl) + '</button></div>' +
+      '<div class="panel"><label class="lbl" for="q">Buscar</label><input id="q" type="search" placeholder="Nombre, teléfono o cualquier dato de la ficha" value="' + esc(ui.q) + '"></div>' +
+      '<div id="cl-list">' + clientRows(S) + '</div>';
+  }
+
+  function services(S) {
+    var d = D();
+    var rows = d.services.map(function (s) {
+      return '<li class="card svrow"><div><div class="name">' + esc(s.name) + '</div><div class="meta">' + (s.min ? s.min + ' min' : 'Sin duración fija') + '</div></div>' +
+        '<input type="number" min="0" step="0.5" value="' + esc(s.price) + '" data-svc="' + s.id + '" aria-label="Precio de ' + esc(s.name) + ' en euros">' +
+        '<button class="btn small quiet danger" type="button" data-a="del-svc" data-id="' + s.id + '">Eliminar</button></li>';
+    }).join('');
+    var form = ui.showSv ? '<form class="card panel form" data-form="svc">' +
+      '<div class="wide"><label class="lbl" for="sv-name">Nombre del servicio</label><input id="sv-name" required maxlength="60"></div>' +
+      '<div><label class="lbl" for="sv-price">Precio (€)</label><input id="sv-price" type="number" min="0" step="0.5" required></div>' +
+      '<div><label class="lbl" for="sv-min">Duración (min)</label><input id="sv-min" type="number" min="0" step="5" value="30"></div>' +
+      '<div><button class="btn primary" type="submit" style="width:100%">Añadir servicio</button></div></form>' : '';
+    return '<div class="bar"><div><h2>Servicios</h2><div class="sub">Los cambios de precio no afectan a ' + esc(S.aps.toLowerCase()) + ' ya creadas.</div></div>' +
+      '<button class="btn primary" type="button" data-a="toggle-sv">' + (ui.showSv ? 'Cerrar' : 'Nuevo servicio') + '</button></div>' + form +
+      (d.services.length ? '<ul class="list">' + rows + '</ul>' : '<div class="empty">Añade tu primer servicio.</div>');
+  }
+
+  function cash() {
+    var d = D();
+    var paid = d.appts.filter(function (a) { return a.status === 'cobrada'; });
+    function sum(from, to) { return paid.filter(function (a) { return a.date >= from && a.date <= to; }).reduce(function (s, a) { return s + a.price; }, 0); }
+    var porCobrar = d.appts.filter(function (a) { return a.status === 'hecha'; }).reduce(function (s, a) { return s + a.price; }, 0);
+    var days = [0, 1, 2, 3, 4, 5, 6].map(function (i) { var ds = addDays(TODAY, i - 6); return { ds: ds, v: sum(ds, ds) }; });
+    var max = Math.max.apply(null, days.map(function (x) { return x.v; }).concat([1]));
+    var bars = days.map(function (x) {
+      var wd = parse(x.ds).toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '');
+      var h = x.v ? Math.max(3, Math.round(x.v / max * 100)) : 0;
+      return '<div class="col"><span class="val">' + (x.v ? Math.round(x.v) : '') + '</span><div class="track"><div class="fill' + (x.v ? '' : ' zero') + '" style="height:' + (x.v ? h + '%' : '2px') + '"></div></div><span>' + esc(wd) + '</span></div>';
+    }).join('');
+    var last = paid.slice().sort(function (a, b) { return (b.date + b.time).localeCompare(a.date + a.time); }).slice(0, 8);
+    var rows = last.map(function (a) {
+      var c = client(a.clientId), sv = service(a.serviceId);
+      return '<tr><td class="num">' + esc(shortDate(a.date)) + '</td><td>' + esc(c ? c.name : '—') + '<div class="meta">' + esc(sv ? sv.name : 'Servicio eliminado') + '</div></td><td class="num" style="text-align:right">' + money(a.price) + '</td></tr>';
+    }).join('');
+    return '<div class="bar"><div><h2>Caja</h2><div class="sub">Ingresos de los últimos 7 días, en euros</div></div></div>' +
+      '<div class="tiles">' +
+      '<div class="card tile"><span class="lbl">Hoy</span><div class="big">' + money(sum(TODAY, TODAY)) + '</div></div>' +
+      '<div class="card tile"><span class="lbl">Últimos 7 días</span><div class="big">' + money(sum(addDays(TODAY, -6), TODAY)) + '</div></div>' +
+      '<div class="card tile"><span class="lbl">Este mes</span><div class="big">' + money(sum(TODAY.slice(0, 8) + '01', TODAY)) + '</div></div>' +
+      '<div class="card tile"><span class="lbl">Por cobrar</span><div class="big">' + money(porCobrar) + '</div></div></div>' +
+      '<div class="card panel"><div class="chart" role="img" aria-label="Ingresos diarios de los últimos 7 días">' + bars + '</div></div>' +
+      '<div class="card"><h3 style="font-size:16px;margin-bottom:6px">Últimos cobros</h3>' +
+      (rows ? '<div class="scroll"><table><thead><tr><th>Fecha</th><th>Cliente y servicio</th><th style="text-align:right">Importe</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '<p class="meta">Aún no hay cobros.</p>') + '</div>';
+  }
+
+  var CORE = [['Cliente', 'cl'], ['Cita', 'ap'], ['Profesional', 'st']];
+  function setup(S) {
+    var d = D();
+    var map = CORE.map(function (r) { return '<tr><td>' + r[0] + '</td><td><strong>' + esc(S[r[1]]) + '</strong></td></tr>'; }).join('');
+    var fields = d.fields.length ? d.fields.map(function (f) {
+      return '<span class="chip">' + esc(f.label) + ' <span class="meta">(' + { text: 'texto', date: 'fecha', number: 'número' }[f.type] + ')</span><button type="button" data-a="del-field" data-key="' + esc(f.key) + '" aria-label="Quitar ' + esc(f.label) + '">×</button></span>';
+    }).join('') : '<span class="meta">Sin campos extra.</span>';
+    var staff = d.staff.length ? d.staff.map(function (n, i) {
+      return '<span class="chip">' + esc(n) + '<button type="button" data-a="del-staff" data-v="' + i + '" aria-label="Quitar ' + esc(n) + '">×</button></span>';
+    }).join('') : '<span class="meta">Sin personal.</span>';
+    return '<div class="bar"><div><h2>Sector: ' + esc(S.name.toLowerCase()) + '</h2><div class="sub">El núcleo es el mismo para todos. Aquí se ajusta lo que cambia.</div></div></div>' +
+      '<div class="card panel"><h3 style="font-size:16px;margin-bottom:8px">Palabras del negocio</h3><div class="scroll"><table><thead><tr><th>En el núcleo</th><th>En este sector</th></tr></thead><tbody>' + map + '</tbody></table></div></div>' +
+      '<div class="card panel"><h3 style="font-size:16px;margin-bottom:10px">Campos de la ficha del ' + esc(S.cl.toLowerCase()) + '</h3><div class="chips">' + fields + '</div>' +
+      '<form class="form" data-form="field" style="margin-top:14px"><div><label class="lbl" for="fd-label">Nuevo campo</label><input id="fd-label" required maxlength="40" placeholder="Por ejemplo, Talla de calzado"></div>' +
+      '<div><label class="lbl" for="fd-type">Tipo</label><select id="fd-type"><option value="text">Texto</option><option value="number">Número</option><option value="date">Fecha</option></select></div>' +
+      '<div><button class="btn" type="submit" style="width:100%">Añadir campo</button></div></form></div>' +
+      '<div class="card"><h3 style="font-size:16px;margin-bottom:10px">Personal (' + esc(S.st.toLowerCase()) + ')</h3><div class="chips">' + staff + '</div>' +
+      '<form class="form" data-form="staff" style="margin-top:14px"><div><label class="lbl" for="st-name">Añadir persona</label><input id="st-name" required maxlength="40"></div>' +
+      '<div><button class="btn" type="submit" style="width:100%">Añadir</button></div></form></div>';
+  }
+
+  function sheet(S) {
+    var d = D(), isNew = ui.sheet === 'new', c = isNew ? { name: '', phone: '', notes: '', extra: {} } : client(ui.sheet);
+    if (!c) return '';
+    var extras = d.fields.map(function (f) {
+      var v = c.extra[f.key]; v = v === undefined || v === null ? '' : v;
+      return '<div class="wide"><label class="lbl" for="cx-' + esc(f.key) + '">' + esc(f.label) + '</label><input id="cx-' + esc(f.key) + '" type="' + f.type + '" value="' + esc(v) + '"></div>';
+    }).join('');
+    var hist = '';
+    if (!isNew) {
+      var h = d.appts.filter(function (a) { return a.clientId === c.id; }).sort(function (a, b) { return (b.date + b.time).localeCompare(a.date + a.time); }).slice(0, 6);
+      hist = '<div class="hist"><h3>Historial</h3>' + (h.length ? '<ul class="list" style="gap:0">' + h.map(function (a) {
+        var sv = service(a.serviceId);
+        return '<li><span>' + esc(shortDate(a.date)) + ' · ' + esc(sv ? sv.name : 'Servicio eliminado') + '</span><span class="num">' + money(a.price) + '</span></li>';
+      }).join('') + '</ul>' : '<p class="meta">Sin ' + esc(S.aps.toLowerCase()) + ' todavía.</p>') + '</div>';
+    }
+    return '<div class="back" data-a="close-sheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="Ficha">' +
+      '<h2>' + (isNew ? esc(S.newCl) : esc(c.name)) + '</h2>' +
+      '<form class="form" data-form="client">' +
+      '<div class="wide"><label class="lbl" for="cl-name">Nombre</label><input id="cl-name" required maxlength="80" value="' + esc(c.name) + '"></div>' +
+      '<div class="wide"><label class="lbl" for="cl-phone">Teléfono</label><input id="cl-phone" type="tel" value="' + esc(c.phone) + '"></div>' +
+      extras +
+      '<div class="wide"><label class="lbl" for="cl-notes">Notas</label><textarea id="cl-notes">' + esc(c.notes) + '</textarea></div>' +
+      '<div class="wide row"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" data-a="close-sheet-btn">Cancelar</button>' +
+      (isNew ? '' : '<button class="btn quiet danger" type="button" data-a="del-client" data-id="' + c.id + '" style="margin-left:auto">Eliminar</button>') + '</div></form>' + hist + '</div></div>';
+  }
+
+  function render() {
+    var S = SECTORS[db.sector];
+    document.documentElement.setAttribute('data-sector', db.sector);
+    var view = { agenda: agenda, clients: clients, services: services, cash: cash, setup: setup }[ui.tab](S);
+    root.innerHTML = header(S) + tabs(S) + '<main>' + view + '</main>' + (ui.sheet ? sheet(S) : '');
+    if (ui.sheet) { var f = document.getElementById('cl-name'); if (f) f.focus(); }
+  }
+
+  /* ---------- eventos ---------- */
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-a]');
+    if (!t) return;
+    var a = t.getAttribute('data-a'), id = t.getAttribute('data-id'), v = t.getAttribute('data-v'), d = D();
+    if (a === 'close-sheet') { if (e.target !== t) return; ui.sheet = null; return render(); }
+    if (a === 'tab') { ui.tab = v; ui.sheet = null; return render(); }
+    if (a === 'day') { ui.date = v === '0' ? TODAY : addDays(ui.date, +v); return render(); }
+    if (a === 'toggle-ap') { ui.showAp = !ui.showAp; return render(); }
+    if (a === 'toggle-sv') { ui.showSv = !ui.showSv; return render(); }
+    if (a === 'st') { d.appts.forEach(function (x) { if (x.id === id) x.status = v; }); save(); return render(); }
+    if (a === 'del-ap') { d.appts = d.appts.filter(function (x) { return x.id !== id; }); save(); return render(); }
+    if (a === 'open-client') { ui.sheet = id; return render(); }
+    if (a === 'close-sheet-btn') { ui.sheet = null; return render(); }
+    if (a === 'del-client') {
+      d.clients = d.clients.filter(function (x) { return x.id !== id; });
+      d.appts = d.appts.filter(function (x) { return x.clientId !== id; });
+      ui.sheet = null; save(); return render();
+    }
+    if (a === 'del-svc') { d.services = d.services.filter(function (x) { return x.id !== id; }); save(); return render(); }
+    if (a === 'del-field') { d.fields = d.fields.filter(function (x) { return x.key !== t.getAttribute('data-key'); }); save(); return render(); }
+    if (a === 'del-staff') { d.staff.splice(+v, 1); save(); return render(); }
+    if (a === 'reset') { db.data[db.sector] = seed(db.sector); ui.sheet = null; ui.date = TODAY; save(); return render(); }
+  });
+
+  document.addEventListener('submit', function (e) {
+    var f = e.target.getAttribute && e.target.getAttribute('data-form');
+    if (!f) return;
+    e.preventDefault();
+    var d = D(), val = function (id) { return document.getElementById(id).value; };
+    if (f === 'appt') {
+      var sv = service(val('ap-service'));
+      d.appts.push({ id: uid(), clientId: val('ap-client'), serviceId: val('ap-service'), staff: val('ap-staff'), date: val('ap-date'), time: val('ap-time'), status: 'pendiente', price: sv ? sv.price : 0 });
+      ui.date = val('ap-date'); ui.showAp = false;
+    } else if (f === 'client') {
+      var c = ui.sheet === 'new' ? { id: uid(), extra: {} } : client(ui.sheet);
+      if (!c) return;
+      c.name = val('cl-name').trim(); c.phone = val('cl-phone').trim(); c.notes = val('cl-notes').trim();
+      d.fields.forEach(function (fd) { c.extra[fd.key] = val('cx-' + fd.key); });
+      if (ui.sheet === 'new') d.clients.push(c);
+      ui.sheet = null;
+    } else if (f === 'svc') {
+      d.services.push({ id: uid(), name: val('sv-name').trim(), price: parseFloat(val('sv-price')) || 0, min: parseInt(val('sv-min'), 10) || 0 });
+      ui.showSv = false;
+    } else if (f === 'field') {
+      d.fields.push({ key: 'f' + uid(), label: val('fd-label').trim(), type: val('fd-type') });
+    } else if (f === 'staff') {
+      d.staff.push(val('st-name').trim());
+    }
+    save(); render();
+  });
+
+  document.addEventListener('input', function (e) {
+    if (e.target.id === 'q') {
+      ui.q = e.target.value;
+      document.getElementById('cl-list').innerHTML = clientRows(SECTORS[db.sector]);
+    }
+  });
+
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'sector') {
+      db.sector = t.value; ui.date = TODAY; ui.q = ''; ui.sheet = null; ui.showAp = false; ui.showSv = false;
+      save(); render();
+    } else if (t.getAttribute && t.getAttribute('data-svc')) {
+      var s = service(t.getAttribute('data-svc'));
+      if (s) { s.price = parseFloat(t.value) || 0; save(); }
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && ui.sheet) { ui.sheet = null; render(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
